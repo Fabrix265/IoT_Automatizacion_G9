@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Banda - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Banda Transportadora</h1>
+
+    <section class="card" id="turnoSection">
+      <h2 id="turnTitle">No hay turno activo</h2>
+      <button id="btnShiftToggle">Activar Turno</button>
+    </section>
+
+    <section class="card">
+      <h3>Control Cinta</h3>
+      <button id="btnMotorToggle">Activar Cinta</button>
+      <div>Estado motor: <span id="motorState">--</span></div>
+      <div>LED turno: <span id="turnLed">--</span></div>
+    </section>
+
+    <section class="card">
+      <h3>Almacenamiento</h3>
+      <div id="storageState">Almacenamiento: vacío</div>
+    </section>
+
+    <section class="card">
+      <h3>Contadores</h3>
+      <div>Total: <span id="totalCnt">0</span></div>
+      <div>Pequeños: <span id="smallCnt">0</span></div>
+      <div>Medianos: <span id="medCnt">0</span></div>
+      <div>Grandes: <span id="largeCnt">0</span></div>
+    </section>
+
+    <section class="card">
+      <button id="btnHistory">Ver Historial</button>
+    </section>
+
+    <section class="card" id="historySection" style="display:none;">
+      <h3>Historial</h3>
+      <div id="history"></div>
+      <button id="btnBack">Producción</button>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
