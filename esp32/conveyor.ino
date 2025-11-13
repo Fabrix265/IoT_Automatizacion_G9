@@ -23,11 +23,11 @@ const int BOX_ECHO = 2;
 /////////////////////
 // === SETTINGS ===
 /////////////////////
-const char* ssid = "TU_SSID";           // <-- CAMBIAR
-const char* password = "TU_PASS";       // <-- CAMBIAR
+const char* ssid = "VERONICA2";           // <-- CAMBIAR
+const char* password = "veronica2";       // <-- CAMBIAR
 
-const char* SERVER_BASE = "http://TU_BACKEND_HOST:5000"; // <-- CAMBIAR por la URL pública
-const char* API_KEY = "TU_API_KEY_SEGURA";               // <-- CAMBIAR
+const char* SERVER_BASE = "http://192.168.1.141:5000/api/update"; // <-- ### CAMBIAR SEGUN DESPLIEGUE/NGROK DEMAS ###
+const char* API_KEY = "patroclo";               // <-- CAMBIAR
 
 // object detection params
 const int TOP_DETECT_THRESHOLD_CM = 15; // si la distancia es menor a esto detecta objeto encima del sensor

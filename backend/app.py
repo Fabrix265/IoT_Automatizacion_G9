@@ -23,13 +23,17 @@ def require_api_key(fn):
     wrapper.__name__ = fn.__name__
     return wrapper
 
-@app.before_first_request
-def setup_db():
-    db.create_all()
-    if not DeviceState.query.first():
-        ds = DeviceState(motor_on=False, turn_led_on=False, box_full=False)
-        db.session.add(ds)
-        db.session.commit()
+@app.before_request
+def setup_db_once():
+    if not hasattr(app, 'has_created_db'):
+        with app.app_context():
+            db.create_all()
+            if not DeviceState.query.first():
+                ds = DeviceState(motor_on=False, turn_led_on=False, box_full=False)
+                db.session.add(ds)
+                db.session.commit()
+        app.has_created_db = True
+
 
 # START SHIFT
 @app.route("/api/shift/start", methods=["POST"])

@@ -1,5 +1,5 @@
-const API_BASE = "https://TU_BACKEND_PUBLIC_URL_OR_LOCAL"; // <-- CAMBIAR
-const API_KEY = "TU_API_KEY_SEGURA"; // <-- CAMBIAR
+const API_BASE = "http://38bbb6e9de97.ngrok-free.app"; // <-- ### CAMBIAR SEGUN DESPLIEGUE/NGROK DEMAS ###
+const API_KEY = "patroclo"; // <-- CAMBIAR
 
 async function api(path, opts = {}) {
   const headers = opts.headers || {};
