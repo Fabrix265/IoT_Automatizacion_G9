@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-const String API_BASE = "https://TU_BACKEND_PUBLIC_URL"; // <-- CAMBIAR
-const String API_KEY = "TU_API_KEY_SEGURA";               // <-- CAMBIAR
+const String API_BASE = "https://iot-automatizacion-g9.onrender.com";
+const String API_KEY = "patroclo";
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  @override Widget build(BuildContext ctx) => MaterialApp(home: HomePage());
+  @override
+  Widget build(BuildContext ctx) => MaterialApp(home: HomePage());
 }
 
-class HomePage extends StatefulWidget { @override State createState() => _HomePageState(); }
+class HomePage extends StatefulWidget {
+  @override State createState() => _HomePageState();
+}
+
 class _HomePageState extends State<HomePage> {
   Map counts = {"small":0,"medium":0,"large":0,"total":0};
   bool motor = false;
@@ -19,7 +23,8 @@ class _HomePageState extends State<HomePage> {
   bool boxFull = false;
   List shifts = [];
 
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
     fetchAll();
     Future.periodic(Duration(seconds: 3)).listen((_) => fetchAll());
@@ -27,12 +32,16 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchAll() async {
     try {
-      final st = await http.get(Uri.parse('$API_BASE/api/device_state'));
-      final cur = await http.get(Uri.parse('$API_BASE/api/counts/current'));
-      final hist = await http.get(Uri.parse('$API_BASE/api/shift/history'));
+      final st = await http.get(Uri.parse('$API_BASE/api/device_state'), headers: {'x-api-key': API_KEY});
+      final cur = await http.get(Uri.parse('$API_BASE/api/counts/current'), headers: {'x-api-key': API_KEY});
+      final hist = await http.get(Uri.parse('$API_BASE/api/shift/history'), headers: {'x-api-key': API_KEY});
       if (st.statusCode == 200) {
         final j = jsonDecode(st.body);
-        setState(()=> { motor = j['motor_on'], turnLed = j['turn_led_on'], boxFull = j['box_full'] ?? false });
+        setState(()=> {
+          motor = j['motor_on'],
+          turnLed = j['turn_led_on'],
+          boxFull = j['box_full'] ?? false
+        });
       }
       if (cur.statusCode == 200) {
         final j = jsonDecode(cur.body);
@@ -42,14 +51,14 @@ class _HomePageState extends State<HomePage> {
         final j = jsonDecode(hist.body);
         setState(()=> { shifts = j; });
       }
-    } catch (e) { print(e); }
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> post(String path, Map body) async {
     try {
-      await http.post(Uri.parse('$API_BASE$path'),
-        headers: {'Content-Type':'application/json','x-api-key': API_KEY},
-        body: jsonEncode(body));
+      await http.post(Uri.parse('$API_BASE/api$path'), headers: {'Content-Type':'application/json','x-api-key': API_KEY}, body: jsonEncode(body));
       await fetchAll();
     } catch (e) { print(e); }
   }
@@ -62,21 +71,25 @@ class _HomePageState extends State<HomePage> {
         Card(child: ListTile(title: Text('Turno'), subtitle: Text(turnLed ? 'Activo' : 'Inactivo'), trailing: ElevatedButton(
           onPressed: () async {
             if (!turnLed) {
+              final nameController = TextEditingController(text: "Turno ${DateTime.now()}");
               final name = await showDialog(context: context, builder: (_) => AlertDialog(
-                title: Text('Nombre turno'), content: TextField(controller: TextEditingController(text: "Turno ${DateTime.now()}")),
-                actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: Text('Cancel')), TextButton(onPressed: ()=>Navigator.pop(context, 'Start'), child: Text('Start'))],
+                title: Text('Nombre turno'),
+                content: TextField(controller: nameController),
+                actions: [
+                  TextButton(onPressed: ()=>Navigator.pop(context), child: Text('Cancel')),
+                  TextButton(onPressed: ()=>Navigator.pop(context, nameController.text), child: Text('Start'))
+                ],
               ));
-              await post('/api/shift/start', {'name': name ?? 'Turno'});
+              await post('/shift/start', {'name': name ?? 'Turno'});
             } else {
-              await post('/api/shift/end', {});
+              await post('/shift/end', {});
             }
-          },
-          child: Text(turnLed ? 'Acabar Turno' : 'Activar Turno')
+          }, child: Text(turnLed ? 'Acabar Turno' : 'Activar Turno')
         ))),
         Card(child: ListTile(title: Text('Cinta'), subtitle: Text(motor ? 'ENCENDIDO' : 'APAGADO'), trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          ElevatedButton(onPressed: () => post('/api/device_state', {'motor_on':true}), child: Text('Activar')),
+          ElevatedButton(onPressed: () => post('/device_state', {'motor_on':true}), child: Text('Activar')),
           SizedBox(width:8),
-          ElevatedButton(onPressed: () => post('/api/device_state', {'motor_on':false}), child: Text('Detener')),
+          ElevatedButton(onPressed: () => post('/device_state', {'motor_on':false}), child: Text('Detener')),
         ]))),
         Card(child: Column(children: [
           Text('Almacenamiento: ${boxFull ? 'LLENO' : 'Disponible'}'),
