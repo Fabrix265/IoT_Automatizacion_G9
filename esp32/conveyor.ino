@@ -27,7 +27,7 @@ const int BOX_ECHO = 2;
 const char* ssid = "VERONICA2";             // <-- CAMBIA
 const char* password = "veronica2";         // <-- CAMBIA
 
-const char* SERVER_BASE = "http://38bbb6e9de97.ngrok-free.app"; // <-- CAMBIA
+const char* SERVER_BASE = "https://iot-automatizacion-g9.onrender.com"; // <-- CAMBIA
 const char* API_KEY = "patroclo";           // <-- CAMBIA
 
 // parámetros detección de objetos

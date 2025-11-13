@@ -1,4 +1,4 @@
-const API_BASE = "https://iot-backend.onrender.com"; // URL Render del backend
+const API_BASE = "https://iot-automatizacion-g9.onrender.com"; // URL Render del backend 
 const API_KEY = "patroclo";
 
 async function toggleMotor() {

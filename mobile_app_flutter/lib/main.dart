@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-const String API_BASE = "https://TU_BACKEND_PUBLIC_URL"; // <-- CAMBIAR
-const String API_KEY = "TU_API_KEY_SEGURA";               // <-- CAMBIAR
+const String API_BASE = "https://iot-automatizacion-g9.onrender.com"; // <-- CAMBIAR
+const String API_KEY = "patroclo";               // <-- CAMBIAR
 
 void main() => runApp(MyApp());
 
