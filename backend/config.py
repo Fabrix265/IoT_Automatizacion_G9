@@ -1,4 +1,5 @@
 import os
+from models import db
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "devsecret")
