@@ -77,7 +77,7 @@ btnMotor.addEventListener("click", async () => {
     const motorState = document.getElementById("motor_state").textContent.includes("Activo");
     const turnState = document.getElementById("turn_state").textContent.includes("Activo");
 
-    await fetch(`${API}/api/device_state`, {
+    const res = await fetch(`${API}/api/device_state`, {
         method: "POST",
         headers: HEADERS,
         body: JSON.stringify({
@@ -87,8 +87,22 @@ btnMotor.addEventListener("click", async () => {
         })
     });
 
+    // ------------------------------
+    // VALIDAR SI EL BACK RECHAZÓ LA PETICIÓN
+    // ------------------------------
+    if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo actualizar el motor");
+
+        // Forzar recarga visual correcta
+        cargarEstado();
+        return;
+    }
+
+    // Si todo ok
     cargarEstado();
 });
+
 
 // --- Historial ---
 btnHistorial.addEventListener("click", async () => {
