@@ -1,81 +1,127 @@
-const API_BASE = "https://iot-automatizacion-g9.onrender.com"; // cambiar si hace falta
-const API_KEY = "patroclo";
+const API = "https://iot-automatizacion-g9.onrender.com";
+const HEADERS = { "x-api-key": "patroclo", "Content-Type": "application/json" };
 
-async function post(path, body) {
-  const res = await fetch(`${API_BASE}/api${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type":"application/json",
-      "x-api-key": API_KEY
-    },
-    body: JSON.stringify(body)
-  });
-  return res;
+// --- Botones ---
+const btnTurno = document.getElementById("btnTurno");
+const btnMotor = document.getElementById("btnMotor");
+const btnHistorial = document.getElementById("btnHistorial");
+
+// --- Estado actual ---
+async function cargarEstado() {
+    const res = await fetch(`${API}/api/device_state`, { headers: HEADERS });
+    const data = await res.json();
+
+    const motorState = data.motor_on === true || data.motor_on === "true";
+    const turnState = data.turn_led_on === true || data.turn_led_on === "true";
+    const boxState = data.box_full === true || data.box_full === "true";
+    
+    // Actualizar estado visual
+    actualizarEstadoVisual("motor_state", motorState);
+    actualizarEstadoVisual("turn_state", turnState);
+    actualizarEstadoVisual("box_state", boxState);
+    
+    // Actualizar timestamp
+    const fecha = new Date(data.timestamp);
+    document.getElementById("timestamp").textContent = fecha.toLocaleString('es-ES');
+    
+    // Actualizar botones
+    btnTurno.textContent = turnState ? "Terminar Turno" : "Iniciar Turno";
+    btnMotor.textContent = motorState ? "Desactivar Motor" : "Activar Motor";
 }
 
-async function get(path) {
-  const res = await fetch(`${API_BASE}/api${path}`, {
-    headers: { "x-api-key": API_KEY }
-  });
-  return res;
+// --- Función para actualizar estado visual ---
+function actualizarEstadoVisual(elementId, estado) {
+    const elemento = document.getElementById(elementId);
+    elemento.textContent = estado ? "✓ Activo" : "✗ Inactivo";
+    elemento.className = estado ? "estado-activo" : "estado-inactivo";
 }
 
-async function toggleMotor() {
-  // leer estado actual
-  const st = await get('/device_state');
-  let motor_on = false;
-  if (st.status === 200) {
-    const j = await st.json();
-    motor_on = j.motor_on;
-  }
-  await post('/device_state', { motor_on: !motor_on });
-  alert("Motor toggled");
+// --- Conteos ---
+async function cargarConteos() {
+    const res = await fetch(`${API}/api/counts/current`, { headers: HEADERS });
+    const data = await res.json();
+
+    document.getElementById("count_total").textContent = data.counts.total;
+    document.getElementById("count_small").textContent = data.counts.small;
+    document.getElementById("count_medium").textContent = data.counts.medium;
+    document.getElementById("count_large").textContent = data.counts.large;
 }
 
-async function toggleTurn() {
-  // si no hay turno activo -> start
-  const st = await get('/counts/current');
-  const status = await get('/shift/history');
-  // simple: pedimos start o end de forma manual
-  const activeShift = await fetch(`${API_BASE}/api/shift/history`, { headers: {"x-api-key": API_KEY}}).then(r=>r.json()).then(list => list.find(s => s.end_at === null));
-  if (!activeShift) {
-    const name = prompt("Nombre del turno", `Turno ${new Date().toLocaleString()}`);
-    await post('/shift/start', { name: name || undefined });
-    alert("Turno iniciado");
-  } else {
-    await post('/shift/end', {});
-    alert("Turno finalizado");
-  }
-}
+// --- Iniciar / terminar turno ---
+btnTurno.addEventListener("click", async () => {
+    const turnState = document.getElementById("turn_state").textContent.includes("Activo");
 
-async function getStatus() {
-  try {
-    const res = await get('/device_state');
-    const counts = await get('/counts/current');
-    let out = "";
-    if (res.status === 200) {
-      const j = await res.json();
-      out += `Motor: ${j.motor_on}\nTurn LED: ${j.turn_led_on}\nBox full: ${j.box_full}\nUpdated: ${j.timestamp}\n\n`;
-    } else out += "No device state\n\n";
-    if (counts.status === 200) {
-      const c = await counts.json();
-      out += `Counts: ${JSON.stringify(c.counts, null, 2)}\n`;
+    if (!turnState) {
+        const nombre = prompt("Nombre del turno:");
+        if (!nombre) return;
+
+        await fetch(`${API}/api/shift/start`, {
+            method: "POST",
+            headers: HEADERS,
+            body: JSON.stringify({ name: nombre })
+        });
+
+    } else {
+        await fetch(`${API}/api/shift/end`, {
+            method: "POST",
+            headers: HEADERS
+        });
     }
-    document.getElementById("status").innerText = out;
-  } catch (e) {
-    document.getElementById("status").innerText = "Error: " + e.message;
-  }
-}
 
-document.getElementById("btnMotor").onclick = toggleMotor;
-document.getElementById("btnLed").onclick = toggleTurn;
-document.getElementById("btnHistory").onclick = async () => {
-  const res = await get('/shift/history');
-  if (res.status === 200) {
-    const list = await res.json();
-    document.getElementById("status").innerText = JSON.stringify(list, null, 2);
-  }
-};
+    cargarEstado();
+    cargarConteos();
+});
 
-setInterval(getStatus, 3000);
-getStatus();
+// --- Motor encender/apagar ---
+btnMotor.addEventListener("click", async () => {
+    const motorState = document.getElementById("motor_state").textContent.includes("Activo");
+    const turnState = document.getElementById("turn_state").textContent.includes("Activo");
+
+    await fetch(`${API}/api/device_state`, {
+        method: "POST",
+        headers: HEADERS,
+        body: JSON.stringify({
+            motor_on: !motorState,
+            turn_led_on: turnState,
+            box_full: false
+        })
+    });
+
+    cargarEstado();
+});
+
+// --- Historial ---
+btnHistorial.addEventListener("click", async () => {
+    const res = await fetch(`${API}/api/shift/history`, { headers: HEADERS });
+    const data = await res.json();
+
+    const tbody = document.querySelector("#tablaHistorial tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(t => {
+        const finAt = t.end_at ? new Date(t.end_at).toLocaleString('es-ES') : "-";
+        const startAt = new Date(t.start_at).toLocaleString('es-ES');
+        
+        tbody.innerHTML += `
+            <tr>
+                <td>${t.id}</td>
+                <td>${t.name}</td>
+                <td>${startAt}</td>
+                <td>${finAt}</td>
+                <td>${t.counts.total}</td>
+                <td>${t.counts.small}</td>
+                <td>${t.counts.medium}</td>
+                <td>${t.counts.large}</td>
+            </tr>
+        `;
+    });
+});
+
+// --- Auto refresco ---
+setInterval(() => {
+    cargarEstado();
+    cargarConteos();
+}, 1500);
+
+cargarEstado();
+cargarConteos();

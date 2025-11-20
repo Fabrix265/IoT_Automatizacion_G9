@@ -1,5 +1,194 @@
-body { font-family: sans-serif; text-align: center; background-color: #f0f2f5; padding: 40px; }
-button { margin: 10px; padding: 10px 20px; border: none; border-radius: 8px; background-color: #0078ff; color: white; font-size: 16px; cursor: pointer; }
-button:hover { background-color: #005fcc; }
-.container { max-width: 800px; margin: 0 auto; }
-#status { margin-top: 20px; text-align: left; white-space: pre-wrap; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+body {
+    margin: 0;
+    padding: 0;
+    background: #1f1f1f;
+    font-family: "Segoe UI", sans-serif;
+    color: #eaeaea;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 10px;
+}
+
+.title {
+    text-align: center;
+    color: #66aaff;
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+/* Botones */
+.button-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 25px;
+    background: #2b6cb0;
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    transition: 0.25s;
+}
+
+.btn:hover {
+    background: #225a96;
+    transform: scale(1.06);
+}
+
+.btn-yellow {
+    background: #d6a300;
+}
+.btn-yellow:hover {
+    background: #b38700;
+}
+
+.btn-gray {
+    background: #555;
+}
+.btn-gray:hover {
+    background: #444;
+}
+
+/* Tarjetas */
+.card {
+    background: #2b2b2b;
+    padding: 20px;
+    margin-top: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 3px 10px rgba(0,0,0,0.4);
+}
+
+.card h2 {
+    color: #66aaff;
+    margin-bottom: 15px;
+}
+
+/* Estado */
+.state-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.state-item {
+    padding: 15px;
+    background: #1b1b1b;
+    border-radius: 10px;
+    border-left: 4px solid #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.state-item span {
+    color: #bbb;
+    font-weight: 500;
+}
+
+.state-item strong {
+    font-size: 16px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    min-width: 120px;
+    text-align: center;
+}
+
+.estado-activo {
+    background: #1f4d2b;
+    color: #4ade80;
+    border: 1px solid #4ade80;
+    font-weight: bold;
+}
+
+.estado-inactivo {
+    background: #4d1f1f;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    font-weight: bold;
+}
+
+.state-item:has(.estado-activo) {
+    border-left-color: #4ade80;
+}
+
+.state-item:has(.estado-inactivo) {
+    border-left-color: #ef4444;
+}
+
+/* Conteos */
+.count-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.count-box {
+    padding: 15px;
+    text-align: center;
+    background: #1b1b1b;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.count-box p {
+    margin: 0;
+    font-size: 14px;
+    color: #9f9f9f;
+}
+
+.count-box strong {
+    font-size: 22px;
+    color: #66aaff;
+    display: block;
+    margin-top: 8px;
+}
+
+/* Tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+thead {
+    background: #333;
+}
+
+th, td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+}
+
+tbody tr:hover {
+    background: #2f2f2f;
+}
+
+th {
+    color: #66aaff;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .state-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .count-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    th, td {
+        padding: 8px 5px;
+        font-size: 13px;
+    }
+}

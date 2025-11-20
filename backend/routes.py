@@ -12,21 +12,37 @@ api = Blueprint('api', __name__)
 @require_api_key
 def post_device_state():
     data = request.get_json() or {}
+
     # Map payload keys used by ESP32 / frontend
     motor_on = data.get('motor_on') if 'motor_on' in data else data.get('motor', None)
     turn_led_on = data.get('turn_led_on') if 'turn_led_on' in data else data.get('turnLed', None)
     box_full = data.get('box_full') if 'box_full' in data else data.get('boxFull', None)
 
-    # Si no vienen valores explícitos, no los sobreescribimos (opcional)
+    # -------------------------------------------
+    # 🛑 VALIDACIÓN: no motor sin turno activo
+    # -------------------------------------------
+    shift = Shift.query.filter_by(end_at=None).order_by(Shift.start_at.desc()).first()
+
+    if motor_on is True and not shift:
+        return jsonify({
+            "error": "No se puede activar el motor sin turno activo",
+            "motor_on": False
+        }), 400
+
+    # Obtener último estado
     last = DeviceState.query.order_by(DeviceState.timestamp.desc()).first()
+
     new_state = DeviceState(
         motor_on = motor_on if motor_on is not None else (last.motor_on if last else False),
         turn_led_on = turn_led_on if turn_led_on is not None else (last.turn_led_on if last else False),
         box_full = box_full if box_full is not None else (last.box_full if last else False)
     )
+
     db.session.add(new_state)
     db.session.commit()
-    return jsonify({"message":"Device state updated"}), 200
+
+    return jsonify({"message": "Device state updated"}), 200
+
 
 @api.route('/device_state', methods=['GET'])
 @require_api_key
@@ -110,18 +126,31 @@ def shift_start():
 @api.route('/shift/end', methods=['POST'])
 @require_api_key
 def shift_end():
-    # finalizar el shift activo más reciente
     shift = Shift.query.filter_by(end_at=None).order_by(Shift.start_at.desc()).first()
     if not shift:
-        return jsonify({"message":"No active shift"}), 404
+        return jsonify({"message": "No active shift"}), 404
+
+    # cerrar el turno
     shift.end_at = datetime.utcnow()
     db.session.add(shift)
-    # apagar turn LED globalmente
-    ds = DeviceState(motor_on=False, turn_led_on=False, box_full=False)
+
+    # -------------------------------
+    # APAGAR motor y LED automáticamente
+    # -------------------------------
+    ds = DeviceState(
+        motor_on=False,
+        turn_led_on=False,
+        box_full=False
+    )
     db.session.add(ds)
+
     db.session.commit()
-    # hacer sonar buzzer: el ESP32 leerá box_full o poll y detectará cambio; puedes notificar por otro endpoint si quieres.
-    return jsonify({"message":"shift ended", "shift": shift.as_dict()}), 200
+
+    return jsonify({
+        "message":"shift ended",
+        "shift": shift.as_dict()
+    }), 200
+
 
 @api.route('/shift/history', methods=['GET'])
 @require_api_key

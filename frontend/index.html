@@ -1,20 +1,68 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IoT Dashboard - Conveyor</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel IoT - Automatización</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <h1>🚀 Control de Banda IoT</h1>
-  <div class="container">
-    <button id="btnMotor">Motor ON/OFF</button>
-    <button id="btnLed">Activar Turno</button>
-    <button id="btnHistory">Ver Historial</button>
-    <div id="status"></div>
-    <pre id="output"></pre>
-  </div>
-  <script src="app.js"></script>
+    <div class="container">
+
+        <h1 class="title">Panel de Control IoT</h1>
+
+        <!-- Botones -->
+        <div class="button-row">
+            <button id="btnTurno" class="btn">Iniciar Turno</button>
+            <button id="btnMotor" class="btn btn-yellow">Activar Motor</button>
+            <button id="btnHistorial" class="btn btn-gray">Ver Historial</button>
+        </div>
+
+        <!-- Estado actual -->
+        <div class="card">
+            <h2>Estado Actual</h2>
+            <div id="estado" class="state-grid">
+                <div class="state-item"><span>Motor:</span> <strong id="motor_state">-</strong></div>
+                <div class="state-item"><span>Turno activo:</span> <strong id="turn_state">-</strong></div>
+                <div class="state-item"><span>Caja llena:</span> <strong id="box_state">-</strong></div>
+                <div class="state-item"><span>Actualizado:</span> <strong id="timestamp">-</strong></div>
+            </div>
+        </div>
+
+        <!-- Conteos -->
+        <div class="card">
+            <h2>Conteos</h2>
+            <div class="count-grid">
+                <div class="count-box"><p>Total</p><strong id="count_total">0</strong></div>
+                <div class="count-box"><p>Pequeños</p><strong id="count_small">0</strong></div>
+                <div class="count-box"><p>Medianos</p><strong id="count_medium">0</strong></div>
+                <div class="count-box"><p>Grandes</p><strong id="count_large">0</strong></div>
+            </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="card">
+            <h2>Historial de Turnos</h2>
+            <table id="tablaHistorial">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Total</th>
+                        <th>Peq.</th>
+                        <th>Med.</th>
+                        <th>Gr.</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
