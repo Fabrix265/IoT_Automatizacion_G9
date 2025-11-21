@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:async'; // ← IMPORTANTE: agregar esto
 
 const String API_BASE = "https://iot-automatizacion-g9.onrender.com/api";
 const String API_KEY = "patroclo";
@@ -33,7 +34,9 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     fetchAll();
-    Future.periodic(const Duration(seconds: 3)).listen((_) => fetchAll());
+
+    // ← CAMBIO IMPORTANTE
+    Timer.periodic(const Duration(seconds: 3), (_) => fetchAll());
   }
 
   Future<void> fetchAll() async {
