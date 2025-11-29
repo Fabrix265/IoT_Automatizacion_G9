@@ -365,26 +365,62 @@ btnClear.addEventListener("click", async () => {
 });
 
 // Export Excel
-btnExportExcel.addEventListener("click", () => {
-    const params = buildFilterQueryParams();
-    const url = `${API}/api/shift/export/excel${params ? '?'+params : ''}`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.click();
-    showNotification("Descargando Excel...", "info");
+btnExportExcel.addEventListener("click", async () => {
+    try {
+        const params = buildFilterQueryParams();
+        const url = `${API}/api/shift/export/excel${params ? '?' + params : ''}`;
+
+        const res = await fetch(url, { headers: HEADERS });
+        if (!res.ok) {
+            showNotification("Error exportando Excel", "error");
+            return;
+        }
+
+        const blob = await res.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "historial_turnos.xlsx";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        showNotification("Excel descargado", "success");
+
+    } catch (e) {
+        console.error(e);
+        showNotification("Error de conexión", "error");
+    }
 });
 
+
 // Export PDF
-btnExportPdf.addEventListener("click", () => {
-    const params = buildFilterQueryParams();
-    const url = `${API}/api/shift/export/pdf${params ? '?'+params : ''}`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.click();
-    showNotification("Descargando PDF...", "info");
+btnExportPdf.addEventListener("click", async () => {
+    try {
+        const params = buildFilterQueryParams();
+        const url = `${API}/api/shift/export/pdf${params ? '?' + params : ''}`;
+
+        const res = await fetch(url, { headers: HEADERS });
+        if (!res.ok) {
+            showNotification("Error exportando PDF", "error");
+            return;
+        }
+
+        const blob = await res.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "historial_turnos.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        showNotification("PDF descargado", "success");
+
+    } catch (e) {
+        console.error(e);
+        showNotification("Error de conexión", "error");
+    }
 });
+
 
 // Gráfico de barras de turnos
 async function fetchStatsAndRenderChart() {
