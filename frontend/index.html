@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Panel IoT - Automatización</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Chart.js para gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
     <div class="container">
 
         <h1 class="title">Panel de Control IoT</h1>
 
-        <!-- Botones -->
+        <!-- Botones principales -->
         <div class="button-row">
             <button id="btnTurno" class="btn">Iniciar Turno</button>
             <button id="btnMotor" class="btn btn-yellow">Activar Motor</button>
             <button id="btnHistorial" class="btn btn-gray">Ver Historial</button>
         </div>
+
 
         <!-- Estado actual -->
         <div class="card">
@@ -30,7 +32,7 @@
             </div>
         </div>
 
-        <!-- Conteos -->
+        <!-- Conteos + gráfico -->
         <div class="card">
             <h2>Conteos</h2>
             <div class="count-grid">
@@ -39,7 +41,23 @@
                 <div class="count-box"><p>Medianos</p><strong id="count_medium">0</strong></div>
                 <div class="count-box"><p>Grandes</p><strong id="count_large">0</strong></div>
             </div>
+
+            <canvas id="shiftsChart" style="max-height:240px; margin-top:16px;"></canvas>
         </div>
+
+        <!-- Filtros: búsqueda + rango fechas + acciones -->
+        <div class="card">
+            <div class="filters-row">
+                <input id="q_search" placeholder="Buscar nombre de turno..." />
+                <input id="start_date" type="date" />
+                <input id="end_date" type="date" />
+                <button id="btnFilter" class="btn btn-small">Filtrar</button>
+                <button id="btnClear" class="btn btn-small btn-gray">Limpiar</button>
+                <button id="btnExportExcel" class="btn btn-small">Exportar XLSX</button>
+                <button id="btnExportPdf" class="btn btn-small">Exportar PDF</button>
+            </div>
+        </div>
+
 
         <!-- Historial -->
         <div class="card">

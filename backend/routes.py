@@ -1,9 +1,42 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, send_file
 from models import db, DeviceState, ObjectEvent, Shift
 from utils import require_api_key
-from datetime import datetime
+from datetime import datetime, timedelta
+from io import BytesIO
+import pandas as pd
+from fpdf import FPDF
 
 api = Blueprint('api', __name__)
+
+def _apply_shift_filters(query):
+    """Aplica filtros comunes (start_date, end_date, q) a una query SQLAlchemy de Shift."""
+    q = request.args.get('q')
+    start = request.args.get('start_date')
+    end = request.args.get('end_date')
+
+    if start:
+        try:
+            start_dt = datetime.fromisoformat(start)
+            query = query.filter(Shift.start_at >= start_dt)
+        except Exception:
+            pass
+
+    if end:
+        try:
+            # hacer inclusive la fecha final si solo es YYYY-MM-DD
+            if len(end) == 10:
+                end_dt = datetime.fromisoformat(end) + timedelta(days=1)
+            else:
+                end_dt = datetime.fromisoformat(end)
+            query = query.filter(Shift.start_at < end_dt)
+        except Exception:
+            pass
+
+    if q:
+        # ilike para búsqueda case-insensitive
+        query = query.filter(Shift.name.ilike(f"%{q}%"))
+
+    return query
 
 # -------------------------
 # Device state endpoints
@@ -110,14 +143,14 @@ def counts_current():
 def shift_start():
     data = request.get_json() or {}
     name = data.get('name') or f"Turno {datetime.utcnow().isoformat()}"
-    # cerrar cualquier shift abierto? -> por ahora permitimos uno a la vez: cerrar prev abiertos
+    # cerrar cualquier shift abierto
     open_shifts = Shift.query.filter_by(end_at=None).all()
     for s in open_shifts:
         s.end_at = datetime.utcnow()
     new_shift = Shift(name=name)
     db.session.add(new_shift)
     db.session.commit()
-    # Opcional: encender turn LED por crear device state
+    # Opcional: encender turn LED
     ds = DeviceState(motor_on=False, turn_led_on=True, box_full=False)
     db.session.add(ds)
     db.session.commit()
@@ -134,9 +167,7 @@ def shift_end():
     shift.end_at = datetime.utcnow()
     db.session.add(shift)
 
-    # -------------------------------
     # APAGAR motor y LED automáticamente
-    # -------------------------------
     ds = DeviceState(
         motor_on=False,
         turn_led_on=False,
@@ -155,5 +186,97 @@ def shift_end():
 @api.route('/shift/history', methods=['GET'])
 @require_api_key
 def shift_history():
-    shifts = Shift.query.order_by(Shift.start_at.desc()).limit(100).all()
+    query = Shift.query
+    query = _apply_shift_filters(query)
+    shifts = query.order_by(Shift.start_at.desc()).limit(1000).all()
     return jsonify([s.as_dict() for s in shifts]), 200
+
+# -------------------------
+# STATS para gráficos
+# -------------------------
+@api.route('/shift/stats', methods=['GET'])
+@require_api_key
+def shift_stats():
+    query = Shift.query
+    query = _apply_shift_filters(query)
+    shifts = query.order_by(Shift.start_at.desc()).limit(100).all()
+
+    labels = []
+    totals = []
+    for s in reversed(shifts):  # orden ascendente para el chart
+        start_label = s.start_at.strftime("%Y-%m-%d %H:%M")
+        labels.append(f"{s.name} ({start_label})")
+        totals.append(s.counts_total or 0)
+
+    return jsonify({"labels": labels, "totals": totals}), 200
+
+# ---------------------------------------------------
+# EXPORTAR HISTORIAL A EXCEL (acepta filtros)
+# ---------------------------------------------------
+@api.route('/shift/export/excel', methods=['GET'])
+@require_api_key
+def export_excel():
+    query = Shift.query
+    query = _apply_shift_filters(query)
+    shifts = query.order_by(Shift.start_at.desc()).all()
+
+    rows = []
+    for s in shifts:
+        rows.append({
+            "ID": s.id,
+            "Nombre": s.name,
+            "Inicio": s.start_at.isoformat(),
+            "Fin": s.end_at.isoformat() if s.end_at else "",
+            "Total": s.counts_total,
+            "Pequeños": s.counts_small,
+            "Medianos": s.counts_medium,
+            "Grandes": s.counts_large
+        })
+    
+    df = pd.DataFrame(rows)
+    output = BytesIO()
+    df.to_excel(output, index=False, engine='openpyxl')
+    output.seek(0)
+
+    return send_file(output, as_attachment=True,
+                     download_name="historial_turnos.xlsx",
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+# ---------------------------------------------------
+# EXPORTAR HISTORIAL A PDF (acepta filtros)
+# ---------------------------------------------------
+@api.route('/shift/export/pdf', methods=['GET'])
+@require_api_key
+def export_pdf():
+    query = Shift.query
+    query = _apply_shift_filters(query)
+    shifts = query.order_by(Shift.start_at.desc()).all()
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(0, 10, txt="Historial de Turnos", ln=True, align='C')
+    pdf.ln(4)
+
+    for s in shifts:
+        pdf.cell(0, 8, txt=f"ID: {s.id}  |  {s.name}", ln=True)
+        inicio_str = s.start_at.strftime("%Y-%m-%d %H:%M:%S")
+        fin_str = s.end_at.strftime("%Y-%m-%d %H:%M:%S") if s.end_at else "En curso"
+        pdf.cell(0, 8, txt=f"Inicio: {inicio_str}  -  Fin: {fin_str}", ln=True)
+        pdf.cell(0, 8, txt=f"Total: {s.counts_total}  Peq:{s.counts_small}  Med:{s.counts_medium}  Gra:{s.counts_large}", ln=True)
+        pdf.ln(4)
+
+    pdf_output = pdf.output(dest='S')
+    if isinstance(pdf_output, str):
+        pdf_bytes = pdf_output.encode('latin-1')
+    else:
+        pdf_bytes = pdf_output
+    
+    output = BytesIO(pdf_bytes)
+    output.seek(0)
+
+    return send_file(output, as_attachment=True,
+                     download_name="historial_turnos.pdf",
+                     mimetype="application/pdf")

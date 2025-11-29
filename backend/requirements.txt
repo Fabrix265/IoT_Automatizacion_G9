@@ -5,3 +5,7 @@ flask_sqlalchemy
 psycopg2-binary
 requests
 gunicorn
+
+pandas
+openpyxl
+fpdf
